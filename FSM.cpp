@@ -60,7 +60,7 @@ State::StateID OffState::update(SwitchControl::Event event)
 		return STATE_STARTUP;
 	}
 
-	return get_id();
+	return STATE_NONE;
 }
 
 
@@ -88,7 +88,7 @@ State::StateID StartupState::update(SwitchControl::Event event)
 		led_bar.setLevel((state_time() + 10) / 100);
 	}
 	
-	return get_id();
+	return STATE_NONE;
 }
 
 
@@ -134,7 +134,7 @@ State::StateID ProgramState::update(SwitchControl::Event event)
 		}
 	}
 
-	return get_id();
+	return STATE_NONE;
 }
 
 
@@ -167,7 +167,7 @@ State::StateID TimerState::update(SwitchControl::Event event)
 		return STATE_WAIT;
 	}
 	
-	return get_id();
+	return STATE_NONE;
 }
 
 
@@ -238,5 +238,5 @@ State::StateID WaitState::update(SwitchControl::Event event)
 		led_bar.setLeds(leds);
 	}
 
-	return get_id();
+	return STATE_NONE;
 }
