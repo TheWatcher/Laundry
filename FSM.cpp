@@ -196,7 +196,7 @@ void WaitState::sweep_leds(int led, int dir, uint8_t *vals)
 			dir = -1;
 		}
 		
-		level /= 2;
+		level /= 3;
 	}
 }
 
