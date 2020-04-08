@@ -2,7 +2,8 @@
 
 void Machine::update(SwitchControl::Event event)
 {
-	if (current_state != State::StateID::STATE_NONE) {
+	// If the FSM is in a sane state, with a known state impl, run the state's update.
+	if (current_state != State::StateID::STATE_NONE && states[current_state] ) { 
 		set_state(states[current_state] -> update(event));
 	}
 }
@@ -10,13 +11,18 @@ void Machine::update(SwitchControl::Event event)
 
 void Machine::add_state(State *state)
 {
+	// Store the new state impl, potentially discarding any previous occupant of this slot
 	states[state -> get_id()] = state;
 }
 
 
 void Machine::set_state(State::StateID newstate)
 {
-	if (newstate != current_state) {
+	if (newstate != current_state &&              // nothing to do if already in the right state
+		newstate != State::StateID::STATE_NONE && // ignore attempts to go into no-state
+		newstate <  State::StateID::STATE_MAX &&  // only allow states in the known range
+		states[newstate]) {                       // and the state must have an implementation
+
 		current_state = newstate;
 		states[current_state] -> enter();
 	}
@@ -29,10 +35,12 @@ void Machine::set_state(State::StateID newstate)
 
 State::StateID State::update(SwitchControl::Event event)
 {
+	// Longpresses always go to the off state, from any state.
 	if (event == SwitchControl::EVENT_LONGPRESS) {
 		return STATE_OFF;
 	}
 
+	// Otherwise, no change.
 	return STATE_NONE;
 }
 
@@ -45,6 +53,7 @@ void OffState::enter()
 {
 	State::enter();
 
+	// Turn off the bar and button LEDs
 	led_bar.setLevel(0);
 	button.set_led_state(false);
 }
@@ -56,6 +65,7 @@ State::StateID OffState::update(SwitchControl::Event event)
 		return newstate;
 	}
 
+	// Wakeup from off on button press
 	if (event == SwitchControl::EVENT_PRESSED) {
 		return STATE_STARTUP;
 	}
@@ -72,6 +82,7 @@ void StartupState::enter()
 {
 	State::enter();
 
+	// Turn on the button LED
 	button.set_led_state(true);
 }
 
@@ -82,6 +93,8 @@ State::StateID StartupState::update(SwitchControl::Event event)
 		return newstate;
 	}
 
+	// fill in the LED bar based on the state time, with a bit of fudge on
+	// the timer at the end so it shows all 10 for more than an instant
 	if (state_time() >= 1500) {
 		return STATE_PROGRAM;
 	} else {
@@ -100,7 +113,8 @@ void ProgramState::enter()
 {
 	State::enter();
 
-	led_bar.setLevel(0);
+	// There will always be a minimum of one bar turned on
+	led_bar.setLevel(1);
 	program_time = 1;
 }
 
@@ -111,6 +125,7 @@ State::StateID ProgramState::update(SwitchControl::Event event)
 		return newstate;
 	}
 
+	// If the user has pressed the button, increment the set time, with wrap
 	if (event == SwitchControl::EVENT_PRESSED) {
 		++program_time;
 		if (program_time > 10) {
@@ -120,15 +135,21 @@ State::StateID ProgramState::update(SwitchControl::Event event)
 		led_bar.setLevel(program_time);
 	}
 
+	// If the user hasn't pressed and released the button for a period,
+	// look at flashing the LEDS or even starting the timer.
 	unsigned long released = button.time_since_released();
-	if (button.time_since_pressed() > 2000 && released > 2000) {
-		if (((released - 2000) / 250) % 2) {
+ 	if (button.time_since_pressed() > hold_time && released > hold_time) {
+
+		// Flash the LEDs on and off to indicate impending timer set
+		if (((released - hold_time) / 250) % 2) {
 			led_bar.setLevel(0);
 		} else {
 			led_bar.setLevel(program_time);
 		}
 
-		if (released > 4500) {
+		// If the user hasn't pressed anything for over the timeout time, set
+		// the total time for the timer, and indicate the move to the new state
+		if (released > timeout) {
 			*total_time = program_time * (bar_time * 1000);
 			return STATE_TIMER;
 		}
@@ -157,12 +178,14 @@ State::StateID TimerState::update(SwitchControl::Event event)
 		return newstate;
 	}
 
+	// Only update the bar every half second or so; even that's probably overkill
 	if(millis() > (last_update + 500)) {
 		last_update = millis();
 
 		led_bar.setLevel((float)state_time() / ((float)(*total_time) / 10.0f));
 	}
 
+	// If we've been in the state long enough, switch to the wait state.
 	if (state_time() > *total_time) {
 		return STATE_WAIT;
 	}
