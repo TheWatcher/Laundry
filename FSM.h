@@ -71,7 +71,7 @@ public:
 class ProgramState : public State
 {
 public:
-	ProgramState(SwitchControl &button, Grove_LED_Bar &led_bar, unsigned long *total_time, unsigned long bar_time = 3000) : State(STATE_PROGRAM, button, led_bar),
+	ProgramState(SwitchControl &button, Grove_LED_Bar &led_bar, unsigned long *total_time, unsigned long bar_time = 1800) : State(STATE_PROGRAM, button, led_bar),
 		total_time(total_time), bar_time(bar_time), program_time(0)
 	    { /* fnord */ }
 
