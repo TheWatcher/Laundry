@@ -1,27 +1,39 @@
 #include <Grove_LED_Bar.h>
 #include "SwitchControl.h"
+#include "FSM.h"
 
 const int switch_pin = 2;
 const int led_pin    = 3;
+const int clock_pin  = 7;
+const int data_pin   = 8;
+
+unsigned long total_time = 0;
 
 SwitchControl control_switch(switch_pin, led_pin);
+Grove_LED_Bar bar(clock_pin, data_pin, true, LED_BAR_10);
+
+OffState state_off(control_switch, bar);
+StartupState state_startup(control_switch, bar);
+ProgramState state_program(control_switch, bar, &total_time);
+TimerState state_timer(control_switch, bar, &total_time);
+WaitState state_wait(control_switch, bar);
+
+Machine fsm;
 
 void setup() {
-  // put your setup code here, to run once:
-  control_switch.setup();
   Serial.begin(9600);
+  control_switch.setup();
+  bar.begin();
+
+  fsm.add_state(&state_off);
+  fsm.add_state(&state_startup);
+  fsm.add_state(&state_program);
+  fsm.add_state(&state_timer);
+  fsm.add_state(&state_wait);
+  fsm.set_state(State::StateID::STATE_OFF);
 }
 
 void loop() {
 	SwitchControl::Event event = control_switch.update();
-
-	if (event == SwitchControl::EVENT_PRESSED) {
-		Serial.println("Pressed event");
-    control_switch.set_led_state(true);
-	} else if (event == SwitchControl::EVENT_LONGPRESS) {
-		Serial.println("Long press event");
-    control_switch.set_led_state(false);
-	} else if (event == SwitchControl::EVENT_RELEASED) {
-		Serial.println("Released event");
-	}
+  fsm.update(event);
 }
