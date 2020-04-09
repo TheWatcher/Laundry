@@ -179,7 +179,7 @@ State::StateID TimerState::update(SwitchControl::Event event)
     }
 
     // Only update the bar every half second or so; even that's probably overkill
-    if(millis() > (last_update + 500)) {
+    if((unsigned long)(millis() - last_update) > 500)) {
         last_update = millis();
 
         led_bar.setLevel((float)state_time() / ((float)(*total_time) / 10.0f));
@@ -260,7 +260,7 @@ State::StateID WaitState::update(SwitchControl::Event event)
     }
 
     // Update the sweep every 10th of a second
-    if (millis() > (last_update + 100)) {
+    if ((unsigned long)(millis() - last_update) > 100) {
         last_update = millis();
 
         // Move to the next LED, 'bouncing' off the ends
