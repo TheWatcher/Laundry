@@ -248,7 +248,7 @@ void WaitState::enter()
     last_update = millis();
     sweep_led = 0;
     sweep_dir = 1;
-    led_bar.setLevel(0);
+    sweep_leds(0, 1);
 }
 
 
