@@ -200,8 +200,10 @@ State::StateID TimerState::update(SwitchControl::Event event)
 
 void WaitState::sweep_leds(int led, int dir)
 {
-    uint8_t leds[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t leds[10];
     uint8_t level = 0xff;
+
+    memset(leds, 0, 10);
 
     // We actually want to go in the opposite direction to the sweep dir,
     // as we're going to be building the 'trail' behind the head
@@ -210,16 +212,21 @@ void WaitState::sweep_leds(int led, int dir)
     while (level > 0) {
         // Do not overwrite alread-set LEDs - otherwise bounce trails
         // would overwrite the head!
-        if (vals[led] == 0) {
-            vals[led] = level;
+        if (leds[led] == 0) {
+            leds[led] = level;
         }
 
-        // Move to the next LED, 'bouncing' off the ends
+        // Move to the next LED
         led += dir;
-        if (led == 0) {
+
+        // Note that we need to explicitly handle out of bounds when doing
+        // bounce here, as the += dir above can move the led to -1 or 10.
+        if (led <= 0) {
+            led = 0;
             dir = 1;
         }
-        if (led == 9) {
+        if (led >= 9) {
+            led = 9;
             dir = -1;
         }
 
