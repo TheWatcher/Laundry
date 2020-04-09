@@ -199,6 +199,14 @@ public:
     StateID update(SwitchControl::Event event);
 
 private:
+    /** Display a LED with a fading 'trail' on the LED bar. This sets the led
+     *  at the specified position to full brightness, and then builds a trail
+     *  of decreasing brightness behind the LED in the opposite direction to
+     *  the specified direction.
+     *
+     * @param led The LED to set to full brightness, range 0 to 9
+     * @param dir The direction the brightest LED is 'moving', should be -1 or 1
+     */
     void sweep_leds(int led, int dir);
 
     unsigned long last_update;  //!< The last time the display was updated, in millis

@@ -198,6 +198,10 @@ State::StateID TimerState::update(SwitchControl::Event event)
  *  STATE_WAIT
  */
 
+// Note that we pass led and dir into this rather than just using
+// the sweep_led and sweep_dir variables directly, as we need to
+// modify the led and dir values as part of this function, and we
+// don't want to touch the sweep_led and _dir vars in the process.
 void WaitState::sweep_leds(int led, int dir)
 {
     uint8_t leds[10];
