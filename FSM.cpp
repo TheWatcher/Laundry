@@ -179,7 +179,7 @@ State::StateID TimerState::update(SwitchControl::Event event)
     }
 
     // Only update the bar every half second or so; even that's probably overkill
-    if((unsigned long)(millis() - last_update) > 500)) {
+    if((unsigned long)(millis() - last_update) > 500) {
         last_update = millis();
 
         led_bar.setLevel((float)state_time() / ((float)(*total_time) / 10.0f));
